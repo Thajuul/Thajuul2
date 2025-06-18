@@ -5,27 +5,28 @@
   <title>Whack-a-Mole</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: sans-serif;
+      background: #f2f2f2;
       text-align: center;
-      background-color: #fffde7;
+      padding: 20px;
     }
 
     h1 {
-      margin-top: 20px;
+      margin-bottom: 10px;
     }
 
     #game {
       display: grid;
       grid-template-columns: repeat(3, 100px);
-      gap: 10px;
+      grid-gap: 10px;
       justify-content: center;
-      margin: 30px auto;
+      margin-top: 20px;
     }
 
     .hole {
       width: 100px;
       height: 100px;
-      background-color: #8d6e63;
+      background: #ccc;
       border-radius: 50%;
       position: relative;
       cursor: pointer;
@@ -34,103 +35,94 @@
     .mole {
       width: 80px;
       height: 80px;
-      background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Mole_cartoon.svg/1024px-Mole_cartoon.svg.png') no-repeat center/contain;
+      background: brown;
+      border-radius: 50%;
       position: absolute;
       top: 10px;
       left: 10px;
       display: none;
     }
 
-    .score-board {
-      font-size: 1.5rem;
+    #score {
       margin-top: 20px;
+      font-size: 1.2rem;
     }
 
-    #startBtn {
+    button {
+      margin-top: 15px;
       padding: 10px 20px;
       font-size: 1rem;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    #startBtn:hover {
-      background-color: #43a047;
     }
   </style>
 </head>
 <body>
+
   <h1>Whack-a-Mole</h1>
-  <div class="score-board">Score: <span id="score">0</span></div>
-  <button id="startBtn">Start Game</button>
+  <button onclick="startGame()">Start Game</button>
   <div id="game">
-    <!-- 9 holes -->
-    <div class="hole"><div class="mole"></div></div>
-    <div class="hole"><div class="mole"></div></div>
-    <div class="hole"><div class="mole"></div></div>
-    <div class="hole"><div class="mole"></div></div>
-    <div class="hole"><div class="mole"></div></div>
-    <div class="hole"><div class="mole"></div></div>
-    <div class="hole"><div class="mole"></div></div>
-    <div class="hole"><div class="mole"></div></div>
-    <div class="hole"><div class="mole"></div></div>
+    <!-- Holes will be inserted here -->
   </div>
+  <div id="score">Score: 0</div>
 
   <script>
-    const holes = document.querySelectorAll('.hole');
-    const scoreDisplay = document.getElementById('score');
-    const startBtn = document.getElementById('startBtn');
+    const game = document.getElementById("game");
+    const scoreDisplay = document.getElementById("score");
     let score = 0;
-    let lastHole;
-    let timeUp = false;
+    let active = null;
+    let gameInterval;
+    let gameRunning = false;
 
-    function randomTime(min, max) {
-      return Math.round(Math.random() * (max - min) + min);
-    }
+    function createBoard() {
+      game.innerHTML = "";
+      for (let i = 0; i < 9; i++) {
+        const hole = document.createElement("div");
+        hole.classList.add("hole");
 
-    function randomHole(holes) {
-      const idx = Math.floor(Math.random() * holes.length);
-      const hole = holes[idx];
-      if (hole === lastHole) return randomHole(holes);
-      lastHole = hole;
-      return hole;
-    }
+        const mole = document.createElement("div");
+        mole.classList.add("mole");
+        mole.dataset.index = i;
 
-    function peep() {
-      const time = randomTime(400, 1200);
-      const hole = randomHole(holes);
-      const mole = hole.querySelector('.mole');
-      mole.style.display = 'block';
-      setTimeout(() => {
-        mole.style.display = 'none';
-        if (!timeUp) peep();
-      }, time);
-    }
+        mole.addEventListener("click", () => {
+          if (i === active) {
+            score++;
+            scoreDisplay.textContent = "Score: " + score;
+            mole.style.display = "none";
+            active = null;
+          }
+        });
 
-    function startGame() {
-      score = 0;
-      scoreDisplay.textContent = score;
-      timeUp = false;
-      peep();
-      setTimeout(() => timeUp = true, 15000); // 15 sec game
-    }
-
-    function whack(e) {
-      if (!e.isTrusted) return;
-      if (this.style.display === 'block') {
-        score++;
-        this.style.display = 'none';
-        scoreDisplay.textContent = score;
+        hole.appendChild(mole);
+        game.appendChild(hole);
       }
     }
 
-    document.querySelectorAll('.mole').forEach(mole => {
-      mole.addEventListener('click', whack);
-    });
+    function randomHole() {
+      const moles = document.querySelectorAll(".mole");
+      moles.forEach(m => m.style.display = "none");
+      const index = Math.floor(Math.random() * 9);
+      const mole = moles[index];
+      if (mole) {
+        mole.style.display = "block";
+        active = index;
+      }
+    }
 
-    startBtn.addEventListener('click', startGame);
+    function startGame() {
+      if (gameRunning) return;
+      gameRunning = true;
+      score = 0;
+      scoreDisplay.textContent = "Score: 0";
+      createBoard();
+      randomHole();
+      gameInterval = setInterval(randomHole, 800);
+
+      // Auto stop after 30 seconds
+      setTimeout(() => {
+        clearInterval(gameInterval);
+        alert("Game Over! Your score: " + score);
+        gameRunning = false;
+      }, 30000);
+    }
   </script>
 </body>
 </html>
