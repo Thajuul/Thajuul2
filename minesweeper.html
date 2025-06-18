@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Minesweeper</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f0f0f0;
+      text-align: center;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(10, 30px);
+      grid-gap: 2px;
+      margin: 20px auto;
+      width: max-content;
+    }
+    .cell {
+      width: 30px;
+      height: 30px;
+      background: #ddd;
+      border: 1px solid #999;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .cell.revealed {
+      background: #fff;
+      cursor: default;
+    }
+  </style>
+</head>
+<body>
+  <h1>Minesweeper</h1>
+  <div class="grid" id="grid"></div>
+  <script>
+    const grid = document.getElementById('grid');
+    const width = 10;
+    const mineCount = 15;
+    let cells = [];
+
+    function createBoard() {
+      const mineArray = Array(mineCount).fill('mine').concat(Array(width * width - mineCount).fill('safe'));
+      const shuffled = mineArray.sort(() => Math.random() - 0.5);
+
+      for (let i = 0; i < width * width; i++) {
+        const cell = document.createElement('div');
+        cell.setAttribute('data-id', i);
+        cell.classList.add('cell');
+        if (shuffled[i] === 'mine') cell.setAttribute('data-mine', true);
+        grid.appendChild(cell);
+        cells.push(cell);
+
+        cell.addEventListener('click', function() {
+          clickCell(cell);
+        });
+      }
+
+      for (let i = 0; i < cells.length; i++) {
+        let total = 0;
+        const isLeft = i % width === 0;
+        const isRight = i % width === width - 1;
+
+        if (!cells[i].dataset.mine) {
+          if (i > 0 && !isLeft && cells[i - 1].dataset.mine) total++;
+          if (i > width - 1 && cells[i - width].dataset.mine) total++;
+          if (i > width && !isLeft && cells[i - width - 1].dataset.mine) total++;
+          if (i > width && !isRight && cells[i - width + 1].dataset.mine) total++;
+          if (i < width * width - 1 && !isRight && cells[i + 1].dataset.mine) total++;
+          if (i < width * width - width && cells[i + width].dataset.mine) total++;
+          if (i < width * width - width - 1 && !isLeft && cells[i + width - 1].dataset.mine) total++;
+          if (i < width * width - width + 1 && !isRight && cells[i + width + 1].dataset.mine) total++;
+          cells[i].setAttribute('data', total);
+        }
+      }
+    }
+
+    function clickCell(cell) {
+      const id = cell.getAttribute('data-id');
+      if (cell.classList.contains('revealed')) return;
+
+      if (cell.dataset.mine) {
+        alert('BOOM! Game Over.');
+        cells.forEach(c => {
+          if (c.dataset.mine) c.textContent = '💣';
+        });
+        return;
+      }
+
+      cell.classList.add('revealed');
+      const total = cell.getAttribute('data');
+      if (total != 0) {
+        cell.textContent = total;
+      } else {
+        revealAdjacent(id);
+      }
+    }
+
+    function revealAdjacent(id) {
+      const i = parseInt(id);
+      const isLeft = i % width === 0;
+      const isRight = i % width === width - 1;
+
+      setTimeout(() => {
+        if (i > 0 && !isLeft) clickCell(cells[i - 1]);
+        if (i > width - 1) clickCell(cells[i - width]);
+        if (i > width && !isLeft) clickCell(cells[i - width - 1]);
+        if (i > width && !isRight) clickCell(cells[i - width + 1]);
+        if (i < width * width - 1 && !isRight) clickCell(cells[i + 1]);
+        if (i < width * width - width) clickCell(cells[i + width]);
+        if (i < width * width - width - 1 && !isLeft) clickCell(cells[i + width - 1]);
+        if (i < width * width - width + 1 && !isRight) clickCell(cells[i + width + 1]);
+      }, 10);
+    }
+
+    createBoard();
+  </script>
+</body>
+</html>
