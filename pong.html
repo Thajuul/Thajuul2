@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pong</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    canvas {
+      border: 2px solid white;
+      background: black;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="pong" width="600" height="400"></canvas>
+
+  <script>
+    const canvas = document.getElementById("pong");
+    const ctx = canvas.getContext("2d");
+
+    const paddleWidth = 10, paddleHeight = 100;
+    let upArrow = false, downArrow = false;
+
+    const player = {
+      x: 0,
+      y: canvas.height / 2 - paddleHeight / 2,
+      width: paddleWidth,
+      height: paddleHeight,
+      color: "white",
+      dy: 5
+    };
+
+    const computer = {
+      x: canvas.width - paddleWidth,
+      y: canvas.height / 2 - paddleHeight / 2,
+      width: paddleWidth,
+      height: paddleHeight,
+      color: "white",
+      dy: 4
+    };
+
+    const ball = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      radius: 7,
+      speed: 4,
+      dx: 4,
+      dy: 4,
+      color: "white"
+    };
+
+    function drawRect(x, y, w, h, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, w, h);
+    }
+
+    function drawCircle(x, y, r, color) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2, false);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawNet() {
+      for (let i = 0; i < canvas.height; i += 15) {
+        drawRect(canvas.width / 2 - 1, i, 2, 10, "white");
+      }
+    }
+
+    function draw() {
+      drawRect(0, 0, canvas.width, canvas.height, "black");
+      drawNet();
+      drawRect(player.x, player.y, player.width, player.height, player.color);
+      drawRect(computer.x, computer.y, computer.width, computer.height, computer.color);
+      drawCircle(ball.x, ball.y, ball.radius, ball.color);
+    }
+
+    function movePaddles() {
+      if (upArrow && player.y > 0) player.y -= player.dy;
+      if (downArrow && player.y + player.height < canvas.height) player.y += player.dy;
+
+      // Simple AI for computer
+      if (computer.y + computer.height / 2 < ball.y) computer.y += computer.dy;
+      else computer.y -= computer.dy;
+    }
+
+    function resetBall() {
+      ball.x = canvas.width / 2;
+      ball.y = canvas.height / 2;
+      ball.dx *= -1;
+    }
+
+    function update() {
+      ball.x += ball.dx;
+      ball.y += ball.dy;
+
+      // Bounce off top/bottom
+      if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+        ball.dy *= -1;
+      }
+
+      // Paddle collision
+      let paddle = (ball.x < canvas.width / 2) ? player : computer;
+      if (
+        ball.x + ball.radius > paddle.x &&
+        ball.x - ball.radius < paddle.x + paddle.width &&
+        ball.y + ball.radius > paddle.y &&
+        ball.y - ball.radius < paddle.y + paddle.height
+      ) {
+        ball.dx *= -1;
+      }
+
+      // Score reset
+      if (ball.x < 0 || ball.x > canvas.width) {
+        resetBall();
+      }
+
+      movePaddles();
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+    }
+
+    setInterval(gameLoop, 1000 / 60);
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "ArrowUp") upArrow = true;
+      if (e.key === "ArrowDown") downArrow = true;
+    });
+
+    document.addEventListener("keyup", e => {
+      if (e.key === "ArrowUp") upArrow = false;
+      if (e.key === "ArrowDown") downArrow = false;
+    });
+  </script>
+</body>
+</html>
