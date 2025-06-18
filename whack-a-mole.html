@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Whack-a-Mole</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #fffde7;
+    }
+
+    h1 {
+      margin-top: 20px;
+    }
+
+    #game {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      gap: 10px;
+      justify-content: center;
+      margin: 30px auto;
+    }
+
+    .hole {
+      width: 100px;
+      height: 100px;
+      background-color: #8d6e63;
+      border-radius: 50%;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .mole {
+      width: 80px;
+      height: 80px;
+      background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Mole_cartoon.svg/1024px-Mole_cartoon.svg.png') no-repeat center/contain;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      display: none;
+    }
+
+    .score-board {
+      font-size: 1.5rem;
+      margin-top: 20px;
+    }
+
+    #startBtn {
+      padding: 10px 20px;
+      font-size: 1rem;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #startBtn:hover {
+      background-color: #43a047;
+    }
+  </style>
+</head>
+<body>
+  <h1>Whack-a-Mole</h1>
+  <div class="score-board">Score: <span id="score">0</span></div>
+  <button id="startBtn">Start Game</button>
+  <div id="game">
+    <!-- 9 holes -->
+    <div class="hole"><div class="mole"></div></div>
+    <div class="hole"><div class="mole"></div></div>
+    <div class="hole"><div class="mole"></div></div>
+    <div class="hole"><div class="mole"></div></div>
+    <div class="hole"><div class="mole"></div></div>
+    <div class="hole"><div class="mole"></div></div>
+    <div class="hole"><div class="mole"></div></div>
+    <div class="hole"><div class="mole"></div></div>
+    <div class="hole"><div class="mole"></div></div>
+  </div>
+
+  <script>
+    const holes = document.querySelectorAll('.hole');
+    const scoreDisplay = document.getElementById('score');
+    const startBtn = document.getElementById('startBtn');
+    let score = 0;
+    let lastHole;
+    let timeUp = false;
+
+    function randomTime(min, max) {
+      return Math.round(Math.random() * (max - min) + min);
+    }
+
+    function randomHole(holes) {
+      const idx = Math.floor(Math.random() * holes.length);
+      const hole = holes[idx];
+      if (hole === lastHole) return randomHole(holes);
+      lastHole = hole;
+      return hole;
+    }
+
+    function peep() {
+      const time = randomTime(400, 1200);
+      const hole = randomHole(holes);
+      const mole = hole.querySelector('.mole');
+      mole.style.display = 'block';
+      setTimeout(() => {
+        mole.style.display = 'none';
+        if (!timeUp) peep();
+      }, time);
+    }
+
+    function startGame() {
+      score = 0;
+      scoreDisplay.textContent = score;
+      timeUp = false;
+      peep();
+      setTimeout(() => timeUp = true, 15000); // 15 sec game
+    }
+
+    function whack(e) {
+      if (!e.isTrusted) return;
+      if (this.style.display === 'block') {
+        score++;
+        this.style.display = 'none';
+        scoreDisplay.textContent = score;
+      }
+    }
+
+    document.querySelectorAll('.mole').forEach(mole => {
+      mole.addEventListener('click', whack);
+    });
+
+    startBtn.addEventListener('click', startGame);
+  </script>
+</body>
+</html>
