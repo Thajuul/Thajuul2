@@ -28,7 +28,7 @@
   <div id="info">
     <p>Health: <span id="health">100</span></p>
     <p>Score: <span id="score">0</span></p>
-    <p>Controls: W/A/S/D + Mouse | Left Click to Shoot | E to Knife</p>
+    <p>Controls: W/A/S/D + Mouse | Left Click to Shoot | E to Knife| Dit duurde te lang om te maken rip</p>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r148/three.min.js"></script>
@@ -46,7 +46,25 @@
     init();
     animate();
 
-    function init() {
+    function init(// Set camera to a position and look at the crate
+camera.position.set(0, 2, 5);
+
+// Add a crate to look at
+const crate = new THREE.Mesh(
+  new THREE.BoxGeometry(2, 2, 2),
+  new THREE.MeshPhongMaterial({ color: 0x00ff00 })
+);
+crate.position.set(0, 1, 0); // directly in front of camera
+scene.add(crate);
+
+// Add a directional light facing the crate
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(0, 10, 10);
+scene.add(light);
+
+// Add ambient light for fallback
+scene.add(new THREE.AmbientLight(0x888888));
+() {
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x1e1e1e);
 
