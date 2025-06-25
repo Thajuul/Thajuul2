@@ -30,55 +30,80 @@
     <p>Score: <span id="score">0</span></p>
     <p>Controls: W/A/S/D + Mouse | Left Click to Shoot | E to Knife</p>
   </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r148/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.148.0/examples/js/controls/PointerLockControls.min.js"></script>
+
   <script>
-    let scene, camera, renderer, health = 100, score = 0;
+    let scene, camera, renderer, controls;
+    let health = 100, score = 0;
     let bullets = [], enemies = [];
+    let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+    let velocity = new THREE.Vector3();
+    let direction = new THREE.Vector3();
+    let clock = new THREE.Clock();
 
     init();
     animate();
 
     function init() {
       scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x1e1e1e);
+
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.y = 2;
+
       renderer = new THREE.WebGLRenderer();
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
+      controls = new THREE.PointerLockControls(camera, document.body);
+
+      document.addEventListener('click', () => controls.lock());
+
+      controls.addEventListener('lock', () => console.log('Pointer locked'));
+      controls.addEventListener('unlock', () => console.log('Pointer unlocked'));
+
+      scene.add(controls.getObject());
+
+      const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambient);
+
       const light = new THREE.DirectionalLight(0xffffff, 1);
-      light.position.set(1, 1, 1).normalize();
+      light.position.set(5, 10, 7.5).normalize();
       scene.add(light);
 
       const floor = new THREE.Mesh(
-        new THREE.PlaneGeometry(100, 100),
-        new THREE.MeshPhongMaterial({ color: 0x333333 })
+        new THREE.PlaneGeometry(200, 200),
+        new THREE.MeshPhongMaterial({ color: 0x444444 })
       );
       floor.rotation.x = -Math.PI / 2;
       scene.add(floor);
 
-      camera.position.set(0, 2, 5);
-
-      spawnEnemy();
-
+      document.addEventListener('keydown', onKeyDown);
+      document.addEventListener('keyup', onKeyUp);
       document.addEventListener('click', shoot);
       document.addEventListener('keydown', knifeAttack);
+
+      spawnEnemy();
     }
 
     function spawnEnemy() {
       const geometry = new THREE.BoxGeometry(1, 2, 1);
       const material = new THREE.MeshPhongMaterial({ color: 0xff0000 });
       const enemy = new THREE.Mesh(geometry, material);
-      enemy.position.set(Math.random() * 20 - 10, 1, Math.random() * -20);
+      enemy.position.set(Math.random() * 40 - 20, 1, Math.random() * -40);
       scene.add(enemy);
       enemies.push(enemy);
     }
 
     function shoot() {
+      if (!controls.isLocked) return;
       const geometry = new THREE.SphereGeometry(0.1);
       const material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
       const bullet = new THREE.Mesh(geometry, material);
       bullet.position.copy(camera.position);
-      bullet.userData.velocity = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).multiplyScalar(0.5);
+      bullet.userData.velocity = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).multiplyScalar(1);
       scene.add(bullet);
       bullets.push(bullet);
     }
@@ -102,8 +127,39 @@
       document.getElementById('score').textContent = score;
     }
 
+    function onKeyDown(e) {
+      switch (e.code) {
+        case 'KeyW': moveForward = true; break;
+        case 'KeyS': moveBackward = true; break;
+        case 'KeyA': moveLeft = true; break;
+        case 'KeyD': moveRight = true; break;
+      }
+    }
+
+    function onKeyUp(e) {
+      switch (e.code) {
+        case 'KeyW': moveForward = false; break;
+        case 'KeyS': moveBackward = false; break;
+        case 'KeyA': moveLeft = false; break;
+        case 'KeyD': moveRight = false; break;
+      }
+    }
+
     function animate() {
       requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+
+      direction.z = Number(moveForward) - Number(moveBackward);
+      direction.x = Number(moveRight) - Number(moveLeft);
+      direction.normalize();
+
+      if (controls.isLocked) {
+        velocity.z = -direction.z * 10.0 * delta;
+        velocity.x = -direction.x * 10.0 * delta;
+
+        controls.moveRight(-velocity.x);
+        controls.moveForward(-velocity.z);
+      }
 
       bullets.forEach((b, i) => {
         b.position.add(b.userData.velocity);
@@ -122,113 +178,6 @@
 
       renderer.render(scene, camera);
     }
-  <<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r148/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.148.0/examples/js/controls/OrbitControls.min.js"></script>
-<script>
-  let scene, camera, renderer, controls;
-  let health = 100, score = 0;
-  let bullets = [], enemies = [];
-
-  init();
-  animate();
-
-  function init() {
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1e1e1e); // dark gray background
-
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 5, 10);
-
-    renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-
-    // Controls (mouse to rotate camera)
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 1, 0);
-    controls.update();
-
-    // Lighting
-    const ambient = new THREE.AmbientLight(0xffffff, 0.4);
-    scene.add(ambient);
-
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(5, 10, 7.5).normalize();
-    scene.add(light);
-
-    // Floor
-    const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(100, 100),
-      new THREE.MeshPhongMaterial({ color: 0x444444 })
-    );
-    floor.rotation.x = -Math.PI / 2;
-    scene.add(floor);
-
-    // Start position
-    spawnEnemy();
-
-    document.addEventListener('click', shoot);
-    document.addEventListener('keydown', knifeAttack);
-  }
-
-  function spawnEnemy() {
-    const geometry = new THREE.BoxGeometry(1, 2, 1);
-    const material = new THREE.MeshPhongMaterial({ color: 0xff0000 });
-    const enemy = new THREE.Mesh(geometry, material);
-    enemy.position.set(Math.random() * 20 - 10, 1, Math.random() * -20);
-    scene.add(enemy);
-    enemies.push(enemy);
-  }
-
-  function shoot() {
-    const geometry = new THREE.SphereGeometry(0.1);
-    const material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-    const bullet = new THREE.Mesh(geometry, material);
-    bullet.position.copy(camera.position);
-    bullet.userData.velocity = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).multiplyScalar(0.5);
-    scene.add(bullet);
-    bullets.push(bullet);
-  }
-
-  function knifeAttack(e) {
-    if (e.key === 'e') {
-      enemies.forEach((enemy, i) => {
-        if (enemy.position.distanceTo(camera.position) < 3) {
-          scene.remove(enemy);
-          enemies.splice(i, 1);
-          score += 5;
-          updateHUD();
-          spawnEnemy();
-        }
-      });
-    }
-  }
-
-  function updateHUD() {
-    document.getElementById('health').textContent = health;
-    document.getElementById('score').textContent = score;
-  }
-
-  function animate() {
-    requestAnimationFrame(animate);
-
-    bullets.forEach((b, i) => {
-      b.position.add(b.userData.velocity);
-      enemies.forEach((enemy, j) => {
-        if (b.position.distanceTo(enemy.position) < 1) {
-          scene.remove(enemy);
-          scene.remove(b);
-          bullets.splice(i, 1);
-          enemies.splice(j, 1);
-          score += 10;
-          updateHUD();
-          spawnEnemy();
-        }
-      });
-    });
-
-    renderer.render(scene, camera);
-  }
-</script>
+  </script>
 </body>
 </html>
